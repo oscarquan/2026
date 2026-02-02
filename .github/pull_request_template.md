@@ -1,4 +1,2 @@
-## AI协作说明
-- [ ] 包含AI生成的代码
-- [ ] 已人工审核
-- [ ] 通过测试
+## AI-Generated Code Review
+- [ ] Human reviewed

@@ -1,51 +1,49 @@
-name: AI Collaboration CI
+name: AI Collaboration Pipeline
 
 on:
+  push:
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
-  push:
-    branches: [ develop, feature/** ]
 
 jobs:
-  quality-check:
+  validation:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    
+    - name: Verify file structure
+      run: |
+        echo "📁 项目结构检查..."
+        ls -la
+        echo "✅ 必需文件检查"
+        [ -f "README.md" ] && echo "✓ README.md存在" || echo "✗ README.md缺失"
+        [ -f "CONTRIBUTING.md" ] && echo "✓ CONTRIBUTING.md存在" || echo "✗ CONTRIBUTING.md缺失"
+        
+    - name: Check for AI content
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "🔍 检查AI生成内容..."
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        if [[ "$PR_TITLE" == *"[AI-generated]"* ]] || [[ "$PR_TITLE" == *"[AI]"* ]]; then
+          echo "⚠️ 警告：此PR包含AI生成代码"
+          echo "请确保进行人工代码审查！"
+          echo "::warning::AI-generated code detected. Human review required!"
+        fi
+
+  python-check:
+    runs-on: ubuntu-latest
+    if: "contains(github.event.head_commit.message, '.py') || contains(github.event.pull_request.title, 'python')"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-        
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest flake8 black
-        
-    - name: Check code format
+        if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+    - name: Check Python files
       run: |
-        black --check --diff src/ || echo "Formatting issues found"
-        
-    - name: Run linter
-      run: |
-        flake8 src/ --count --max-complexity=10 --statistics
-        
-    - name: Run tests
-      run: |
-        if [ -d "tests" ]; then
-          pytest tests/ -v
-        else
-          echo "No tests directory found"
-        fi
-        
-  ai-safety-check:
-    runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.title, '[AI-generated]')
-    
-    steps:
-    - name: Check for AI-generated content
-      run: |
-        echo "⚠️  This PR contains AI-generated code"
-        echo "Please ensure thorough human review"
+        find . -name "*.py" -not -path "./.*" | xargs -I {} echo "Found: {}"

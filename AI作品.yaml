@@ -56,3 +56,11 @@ CONTRIBUTING.md     # 协作规范（展示流程理解）
 src/               # 核心代码
 tests/             # 测试套件
 docs/              # 详细文档
+
+
+git log --oneline
+feat: 实现核心算法 [AI-generated, human-reviewed]
+fix: 优化性能瓶颈
+test: 添加测试覆盖率
+docs: 更新架构设计
+# ✅ 完整的故事线
